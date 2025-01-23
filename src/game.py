@@ -47,7 +47,7 @@ class Game:
         blue = (0, 0, 255)
 
         try:
-            image = pygame.image.load('data/gameover.png')
+            image = pygame.image.load('../assets/images/gameover.png')
         except pygame.error as e:
             print(f"Ошибка загрузки изображения: {e}")
             pygame.quit()
