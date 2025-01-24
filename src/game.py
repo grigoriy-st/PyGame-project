@@ -15,6 +15,23 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 
+
+def load_image(fullname, colorkey=None):
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    if colorkey is not None:
+        image = image.convert()
+        if colorkey == -1:
+            colorkey = image.get_at((0, 0))
+        image.set_colorkey(colorkey)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
 class Sprite(pygame.sprite.Sprite):
     def __init__(self, image, start_x, start_y):
         super().__init__()
@@ -65,8 +82,11 @@ class Player(pygame.sprite.Sprite):
 class Asteroid(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((40, 40))
-        self.image.fill(RED)
+        if random.randint(0,  2) == 1:
+            self.image = load_image('../assets/images/meteorit2.png')
+        else:
+            self.image = load_image('../assets/images/meteorit.png')
+        self.image = pygame.transform.scale(self.image, (40, 40))
         self.rect = self.image.get_rect(center=(random.randint(0, WIDTH), 0))
 
     def update(self):
@@ -133,7 +153,7 @@ class Game:
         """ Отображение конца игры. """
         pygame.display.set_caption("Game over")
         blue = (0, 0, 255)
-               
+
         try:
             image = pygame.image.load('../assets/images/gameover.png')
 
@@ -179,7 +199,7 @@ class Game:
                             break
 
                             return
- 
+
             all_sprites.update(clock)
             # self.screen.fill(blue)
             all_sprites.draw(self.screen)
@@ -219,7 +239,7 @@ class Game:
                         bullet = player.shoot()  # Выстрел
                         all_sprites.add(bullet)
                         bullets.add(bullet)
-                    
+
             if random.randint(1, ASTEROID_SPAWN_RATE) == 1:
                 asteroid = Asteroid()
                 all_sprites.add(asteroid)
