@@ -123,19 +123,20 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if button_rect.collidepoint(event.pos):
                         return
-                if event.type == pygame.K_SPACE:
-                    return
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        return
 
             pygame.display.flip()
 
     def show_game_over_screen(self):
         """ Отображение конца игры. """
-        screen = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("Game over")
         blue = (0, 0, 255)
-        
+               
         try:
-            image = pygame.image.load('assets/images/gameover.png')
+            image = pygame.image.load('../assets/images/gameover.png')
+
         except pygame.error as e:
             print(f"Ошибка загрузки изображения: {e}")
             pygame.quit()
@@ -153,15 +154,37 @@ class Game:
         clock = pygame.time.Clock()
 
         while self.running:
+            self.screen.fill(blue)
+
+            button_text = self.button_font.render("Начать новую игру", True, (255, 255, 255))
+            button_rect = button_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 200))
+            pygame.draw.rect(self.screen, (0, 128, 0), button_rect.inflate(20, 20))  # Кнопка
+            self.screen.blit(button_text, button_rect)
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-            
-            clock.tick(60)
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if button_rect.collidepoint(event.pos):
+                        self.show_welcome_screen()
+                        self.main_game()  # начало новой игры
+                        break
+
+                        return
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_SPACE:
+                            self.show_welcome_screen()
+                            self.main_game()  # начало новой игры
+                            break
+
+                            return
+ 
             all_sprites.update(clock)
-            screen.fill(blue)
-            all_sprites.draw(screen)
+            # self.screen.fill(blue)
+            all_sprites.draw(self.screen)
             pygame.display.flip()
+            clock.tick(60)
         pygame.quit()
 
     def run(self):
@@ -215,7 +238,6 @@ class Game:
             # Проверка на столкновение игрока с астероидами
             if pygame.sprite.spritecollideany(player, asteroids):
                 self.show_game_over_screen()
-                break
 
             # Отрисовка
             self.screen.fill(BLACK)
