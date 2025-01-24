@@ -3,11 +3,13 @@ import pygame
 import sys
 import random
 # Константы
+SCORE = 0
+COEFFICIENT = 1
 WIDTH, HEIGHT = 800, 600  # Ширина и высота окна
 FPS = 60
-ASTEROID_SPAWN_RATE = 25  # Частота появления астероидов
+ASTEROID_SPAWN_RATE = 50  # Частота появления астероидов
 BULLET_SPEED = 10
-ASTEROID_SPEED = 3
+ASTEROID_SPEED = 2
 PLAYER_SPEED = 5
 
 # Цвета
@@ -86,7 +88,8 @@ class Asteroid(pygame.sprite.Sprite):
             self.image = load_image('../assets/images/meteorit2.png')
         else:
             self.image = load_image('../assets/images/meteorit.png')
-        self.image = pygame.transform.scale(self.image, (40, 40))
+        random_size = random.randint(20, 100)
+        self.image = pygame.transform.scale(self.image, (random_size, random_size))
         self.rect = self.image.get_rect(center=(random.randint(0, WIDTH), 0))
 
     def update(self):
@@ -99,8 +102,8 @@ class Asteroid(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.Surface((5, 10))
-        self.image.fill(WHITE)
+        self.image = load_image('../assets/images/bullet.png')
+        self.image = pygame.transform.scale(self.image, (20, 20))
         self.rect = self.image.get_rect(center=(x, y))
 
     def update(self):
@@ -132,7 +135,7 @@ class Game:
             # Кнопка для начала игры
             button_text = self.button_font.render("Начать игру", True, (255, 255, 255))
             button_rect = button_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
-            pygame.draw.rect(self.screen, (0, 128, 0), button_rect.inflate(20, 20))  # Кнопка
+            pygame.draw.rect(self.screen, (41, 49, 51), button_rect.inflate(20, 20))  # Кнопка
             self.screen.blit(button_text, button_rect)
 
             # Обработка событий
@@ -152,7 +155,7 @@ class Game:
     def show_game_over_screen(self):
         """ Отображение конца игры. """
         pygame.display.set_caption("Game over")
-        blue = (0, 0, 255)
+        blue = (0, 0, 0)
 
         try:
             image = pygame.image.load('../assets/images/gameover.png')
@@ -178,7 +181,7 @@ class Game:
 
             button_text = self.button_font.render("Начать новую игру", True, (255, 255, 255))
             button_rect = button_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 200))
-            pygame.draw.rect(self.screen, (0, 128, 0), button_rect.inflate(20, 20))  # Кнопка
+            pygame.draw.rect(self.screen, (41, 49, 51), button_rect.inflate(20, 20))  # Кнопка
             self.screen.blit(button_text, button_rect)
 
             for event in pygame.event.get():
@@ -213,9 +216,11 @@ class Game:
 
     def main_game(self):
         """ Основной игровой цикл. """
+        global ASTEROID_SPEED, COEFFICIENT, SCORE
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         clock = pygame.time.Clock()
+        start_time = pygame.time.get_ticks()
 
         # Группы спрайтов
         all_sprites = pygame.sprite.Group()
@@ -227,8 +232,7 @@ class Game:
         all_sprites.add(player)
 
         # Основной игровой цикл
-        score = 0
-
+        SCORE = 0
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -239,6 +243,15 @@ class Game:
                         bullet = player.shoot()  # Выстрел
                         all_sprites.add(bullet)
                         bullets.add(bullet)
+            elapsed_time = pygame.time.get_ticks() - start_time  # Время в миллисекундах
+
+            # Преобразуем в секунды
+            elapsed_seconds = elapsed_time / 1000.0
+            if elapsed_seconds > 20 * COEFFICIENT:
+                SCORE += 75
+                ASTEROID_SPEED = ASTEROID_SPEED * (COEFFICIENT + 1)
+                COEFFICIENT += 1
+
 
             if random.randint(1, ASTEROID_SPAWN_RATE) == 1:
                 asteroid = Asteroid()
@@ -253,7 +266,7 @@ class Game:
                 hit_asteroids = pygame.sprite.spritecollide(bullet, asteroids, True)
                 if hit_asteroids:
                     bullet.kill()
-                    score += len(hit_asteroids)
+                    SCORE += len(hit_asteroids)
 
             # Проверка на столкновение игрока с астероидами
             if pygame.sprite.spritecollideany(player, asteroids):
@@ -265,7 +278,7 @@ class Game:
 
             # Отображение счета
             font = pygame.font.Font(None, 36)
-            text = font.render(f'Score: {score}', True, WHITE)
+            text = font.render(f'Score: {SCORE}', True, WHITE)
             self.screen.blit(text, (10, 10))
 
             pygame.display.flip()
