@@ -3,9 +3,12 @@ import pygame
 import sys
 import random
 from moviepy import VideoFileClip
+from screeninfo import get_monitors
+
+monitors = [m for m in get_monitors()]
 
 # Константы
-WIDTH, HEIGHT = 1000, 1000  # Ширина и высота окна
+WIDTH, HEIGHT = monitors[0].width, monitors[0].height - 60  # Ширина и высота окна
 SCORE = 0
 COEFFICIENT = 1
 FPS = 60
@@ -21,7 +24,6 @@ RED = (255, 0, 0)
 
 skin_index = 0
 img_skin_names = ['baseSkin', 'skin2', 'skin3', 'skin4', 'skin5']
-
 
 def settings():
     ''' отображение видео в настройках '''
@@ -99,21 +101,21 @@ class Sprite(pygame.sprite.Sprite):
         if self.moving:
             elapsed_time = clock.get_time() / 1000.0
             self.rect.x += self.speed * elapsed_time
-            if self.rect.right >= WIDTH * 0.85:  # Установка изображение окончания игры посередине
+            if self.rect.right >= WIDTH * 0.65:  # Установка изображение окончания игры посередине
                 self.moving = False
-                self.rect.right = WIDTH * 0.85
+                self.rect.right = WIDTH * 0.65
 
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface((50, 30))
-        # skin_name = img_skin_names[ skin_index % (len(img_skin_names)) ]
-        # self.img = pygame.image.load(f'assets/images/{skin_name}.png')
-        # self.rect = self.image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        global skin_index, img_skin_names
+        self.image = pygame.Surface((70, 70))
+
         skin_name = img_skin_names[skin_index % len(img_skin_names)]
+
         self.img = pygame.image.load(f'../assets/images/{skin_name}.png')
-        self.img = pygame.transform.scale(self.img, (70, 70))  # Измените размер изображения, если необходимо
+        self.img = pygame.transform.scale(self.img, (70, 70))
         self.rect = self.img.get_rect(center=(WIDTH // 2, HEIGHT // 2))
 
     def update(self):
@@ -148,7 +150,7 @@ class Asteroid(pygame.sprite.Sprite):
             self.image = load_image('../assets/images/meteorit2.png')
         else:
             self.image = load_image('../assets/images/meteorit.png')
-        random_size = random.randint(20, 100)
+        random_size = random.randint(30, 130)
         self.image = pygame.transform.scale(self.image, (random_size, random_size))
         self.rect = self.image.get_rect(center=(random.randint(0, WIDTH), 0))
 
@@ -184,8 +186,7 @@ class Game:
 
     def show_welcome_screen(self):
         """ Отображение приветственного окна. """
-        skin_index = 0
-        
+        global skin_index
         while True:
             self.screen.fill((0, 0, 0))
             
@@ -211,23 +212,25 @@ class Game:
             # Кнопка слева
             left_arrow = pygame.image.load('../assets/images/arrow.png')
             left_arrow = pygame.transform.scale(left_arrow, (200, 200))
-            l_arrow_rect = left_arrow.get_rect()
-            l_arrow_rect.topleft = (100, 300)
-            self.screen.blit(left_arrow, (100, 300))
+            l_arrow_rect = left_arrow.get_rect(center=(WIDTH // 2 - 280, HEIGHT // 2))
+
+            self.screen.blit(left_arrow, l_arrow_rect)
 
             # Кнопка справа
             right_arrow = pygame.image.load('../assets/images/arrow.png')
             right_arrow = pygame.transform.scale(right_arrow, (200, 200))
             right_arrow = pygame.transform.flip(right_arrow, True, False)
-            r_arrow_rect = right_arrow.get_rect()
-            r_arrow_rect.topleft = (650, 300)
-            self.screen.blit(right_arrow, (650, 300))
+            r_arrow_rect = right_arrow.get_rect(center=(WIDTH // 2 + 300, HEIGHT // 2))
+
+            self.screen.blit(right_arrow, r_arrow_rect)
 
             # Скин на выбор
             skin_name = img_skin_names[ skin_index % (len(img_skin_names)) ]
             skin_img = pygame.image.load(f'../assets/images/{skin_name}.png')
             skin_img = pygame.transform.scale(skin_img, (300, 300))
-            self.screen.blit(skin_img, (350, 250))
+            skin_img_rect = skin_img.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+            self.screen.blit(skin_img, skin_img_rect)
 
             # Обработка событий
             for event in pygame.event.get():
@@ -325,6 +328,8 @@ class Game:
         clock = pygame.time.Clock()
         start_time = pygame.time.get_ticks()
 
+        background_image = pygame.image.load('../assets/images/background.png').convert()
+        background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))
         # Группы спрайтов
         all_sprites = pygame.sprite.Group()
         asteroids = pygame.sprite.Group()
@@ -342,7 +347,6 @@ class Game:
                     self.running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN or event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
-                        print("bullet")
                         bullet = player.shoot()  # Выстрел
                         all_sprites.add(bullet)
                         bullets.add(bullet)
@@ -376,7 +380,7 @@ class Game:
                 self.show_game_over_screen()
 
             # Отрисовка
-            self.screen.fill(BLACK)
+            self.screen.blit(background_image, (0,0))
             all_sprites.draw(self.screen)
             player.draw(self.screen)
 
