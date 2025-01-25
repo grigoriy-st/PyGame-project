@@ -2,6 +2,8 @@ import os
 import pygame
 import sys
 import random
+from moviepy import VideoFileClip
+
 # Константы
 WIDTH, HEIGHT = 1000, 1000  # Ширина и высота окна
 SCORE = 0
@@ -19,6 +21,53 @@ RED = (255, 0, 0)
 
 skin_index = 0
 img_skin_names = ['baseSkin', 'skin2', 'skin3', 'skin4', 'skin5']
+
+
+def settings():
+    ''' отображение видео в настройках '''
+    pygame.init()
+    screen_width = 800
+    screen_height = 600
+    # pygame.display.set_caption("Настройки")
+    # font = pygame.font.Font(None, 74)  # None - использовать шрифт по умолчанию, 74 - размер шрифта
+    # text = font.render("Добро пожаловать в настройки!", True, (255, 255, 255))  # Текст, антиалиасинг, цвет текста
+    #
+    # text_rect = text.get_rect(center=(screen_width // 2, 0))
+    # text_rect.top = 80
+    pygame.display.flip()
+    screen = pygame.display.set_mode((screen_width, screen_height))
+
+    # Загрузка видео
+    video_path = '../assets/images/video.mp4'  # Укажите путь к вашему видео
+    clip = VideoFileClip(video_path)
+
+    # Преобразование видео в кадры
+    frames = [clip.get_frame(t) for t in range(int(clip.duration))]
+
+    # Основной цикл
+    running = True
+    clock = pygame.time.Clock()
+    frame_index = 0
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        # Получение текущего кадра
+        if frame_index < len(frames):
+            frame = frames[frame_index]
+            frame_surface = pygame.surfarray.make_surface(frame)
+            screen.blit(frame_surface, (0, 0))
+            frame_index += 1
+        else:
+            frame_index = 0  # Перезапуск видео
+
+        pygame.display.flip()
+        clock.tick(60)  # Ограничение FPS
+
+    pygame.quit()
+
 
 def load_image(fullname, colorkey=None):
     # если файл не существует, то выходим
@@ -63,10 +112,9 @@ class Player(pygame.sprite.Sprite):
         # self.img = pygame.image.load(f'assets/images/{skin_name}.png')
         # self.rect = self.image.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         skin_name = img_skin_names[skin_index % len(img_skin_names)]
-        self.img = pygame.image.load(f'assets/images/{skin_name}.png')
+        self.img = pygame.image.load(f'../assets/images/{skin_name}.png')
         self.img = pygame.transform.scale(self.img, (70, 70))  # Измените размер изображения, если необходимо
         self.rect = self.img.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-
 
     def update(self):
         keys = pygame.key.get_pressed()
@@ -92,11 +140,12 @@ class Player(pygame.sprite.Sprite):
         """ Метод для отрисовки игрока на экране. """
         surface.blit(self.img, self.rect.topleft)
 
+
 class Asteroid(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         if random.randint(0,  2) == 1:
-            self.image = load_image('assets/images/meteorit2.png')
+            self.image = load_image('../assets/images/meteorit2.png')
         else:
             self.image = load_image('../assets/images/meteorit.png')
         random_size = random.randint(20, 100)
@@ -142,15 +191,16 @@ class Game:
             
             # Главный текст
             welcome_text = self.font.render("Добро пожаловать в космическую бурю!", True, (255, 255, 255))
-            text_rect = welcome_text.get_rect(center=(WIDTH // 2, 60 ))
+            text_rect = welcome_text.get_rect(center=(WIDTH // 2, 60))
+            text_rect.top = 80
             self.screen.blit(welcome_text, text_rect)
 
             # Кнопка настройки
-            settings_btn = pygame.image.load('assets/images/settings.png')
+            settings_btn = pygame.image.load('../assets/images/settings.png')
             settings_btn = pygame.transform.scale(settings_btn, (60, 60))
             settings_btn_rect = settings_btn.get_rect()
-            settings_btn_rect.topleft = (30, 30)
-            self.screen.blit(settings_btn, (30, 30))
+            settings_btn_rect.topleft = (20, 70)
+            self.screen.blit(settings_btn, (20, 70))
 
             # Кнопка для начала игры
             button_text = self.button_font.render("Начать игру", True, (255, 255, 255))
@@ -159,14 +209,14 @@ class Game:
             self.screen.blit(button_text, button_rect)
 
             # Кнопка слева
-            left_arrow = pygame.image.load('assets/images/arrow.png')
+            left_arrow = pygame.image.load('../assets/images/arrow.png')
             left_arrow = pygame.transform.scale(left_arrow, (200, 200))
             l_arrow_rect = left_arrow.get_rect()
             l_arrow_rect.topleft = (100, 300)
             self.screen.blit(left_arrow, (100, 300))
 
             # Кнопка справа
-            right_arrow = pygame.image.load('assets/images/arrow.png')
+            right_arrow = pygame.image.load('../assets/images/arrow.png')
             right_arrow = pygame.transform.scale(right_arrow, (200, 200))
             right_arrow = pygame.transform.flip(right_arrow, True, False)
             r_arrow_rect = right_arrow.get_rect()
@@ -175,7 +225,7 @@ class Game:
 
             # Скин на выбор
             skin_name = img_skin_names[ skin_index % (len(img_skin_names)) ]
-            skin_img = pygame.image.load(f'assets/images/{skin_name}.png')
+            skin_img = pygame.image.load(f'../assets/images/{skin_name}.png')
             skin_img = pygame.transform.scale(skin_img, (300, 300))
             self.screen.blit(skin_img, (350, 250))
 
@@ -196,7 +246,7 @@ class Game:
                         skin_index += 1
 
                     if settings_btn_rect.collidepoint(event.pos):
-                        print("Ты кликнул по настройкам")
+                        settings()
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
@@ -211,7 +261,7 @@ class Game:
         blue = (0, 0, 0)
 
         try:
-            image = pygame.image.load('assets/images/gameover.png')
+            image = pygame.image.load('../assets/images/gameover.png')
 
         except pygame.error as e:
             print(f"Ошибка загрузки изображения: {e}")
