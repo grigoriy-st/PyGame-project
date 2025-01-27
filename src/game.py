@@ -5,6 +5,8 @@ import random
 from moviepy import VideoFileClip
 from screeninfo import get_monitors
 
+os.chdir("src")
+
 monitors = [m for m in get_monitors()]
 
 # Константы
@@ -24,6 +26,10 @@ RED = (255, 0, 0)
 
 skin_index = 0
 img_skin_names = ['baseSkin', 'skin2', 'skin3', 'skin4', 'skin5']
+
+# Для авторизации
+user_name = None
+
 
 def settings():
     ''' отображение видео в настройках '''
@@ -182,6 +188,78 @@ class Game:
         self.font = pygame.font.Font(None, 50)
         self.button_font = pygame.font.Font(None, 48)
 
+    def show_auth_screen(self):
+        global user_name
+        self.screen.fill(BLACK)
+
+        clock = pygame.time.Clock() 
+        base_font = pygame.font.Font(None, 32) 
+        user_text = ''
+
+        input_width = 200
+        input_height = 32
+        # input_rect = pygame.Rect((WIDTH // 2) - (input_width // 2), (HEIGHT // 2) - (input_height // 2), input_width, input_height) 
+        input_rect = pygame.Rect((WIDTH // 2 - 50), (HEIGHT // 2), input_width, input_height)
+
+        color_active = pygame.Color('lightskyblue3') 
+        color_passive = pygame.Color('chartreuse4') 
+        color = color_passive 
+        active = False
+        
+        button_text = self.button_font.render("Войти", True, (255, 255, 255))
+        button_rect = button_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 200))
+        pygame.draw.rect(self.screen, (0, 128, 0), button_rect.inflate(20, 20))  # Кнопка
+        
+        welcome_text = self.font.render("Добро пожаловать в космическую бурю!", True, (255, 255, 255))
+        text_rect = welcome_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 200))
+
+        text2= self.font.render("Введите своё имя:", True, (255, 255, 255))
+        text2_rect = welcome_text.get_rect(center=(WIDTH // 2 + 200, HEIGHT // 2 - 30))
+
+        while True: 
+            for event in pygame.event.get(): 
+        
+                if event.type == pygame.QUIT: 
+                    pygame.quit() 
+                    sys.exit() 
+        
+                if event.type == pygame.MOUSEBUTTONDOWN: 
+                    if input_rect.collidepoint(event.pos): 
+                        active = True
+                    else: 
+                        active = False
+
+                    if button_rect.collidepoint(event.pos):
+                        user_name = user_text
+                        return
+
+                if event.type == pygame.KEYDOWN: 
+                    if event.key == pygame.K_BACKSPACE: 
+                        user_text = user_text[:-1] 
+                    else: 
+                        user_text += event.unicode
+                    
+                    
+            
+                    
+            self.screen.fill(BLACK)
+            self.screen.blit(button_text, button_rect)
+            self.screen.blit(welcome_text, text_rect)
+            self.screen.blit(text2, text2_rect)
+
+            if active: 
+                color = color_active 
+            else: 
+                color = color_passive 
+            
+            pygame.draw.rect(self.screen, color, input_rect) 
+            text_surface = base_font.render(user_text, True, (255, 255, 255)) 
+            self.screen.blit(text_surface, (input_rect.x+5, input_rect.y+5)) 
+            input_rect.w = max(100, text_surface.get_width()+10) 
+            pygame.display.flip() 
+            # 60 frames should be passed. 
+            clock.tick(60) 
+
     def show_welcome_screen(self):
         """ Отображение приветственного окна. """
         global skin_index
@@ -189,7 +267,7 @@ class Game:
             self.screen.fill((0, 0, 0))
             
             # Главный текст
-            welcome_text = self.font.render("Добро пожаловать в космическую бурю!", True, (255, 255, 255))
+            welcome_text = self.font.render(f"{user_name}, добро пожаловать в космическую бурю!", True, (255, 255, 255))
             text_rect = welcome_text.get_rect(center=(WIDTH // 2, 60))
             text_rect.top = 80
             self.screen.blit(welcome_text, text_rect)
@@ -261,6 +339,10 @@ class Game:
         pygame.display.set_caption("Game over")
         blue = (0, 0, 0)
 
+        res_text = self.font.render(f"Твой результат: {SCORE}", True, (255, 255, 255))
+        text_rect = res_text.get_rect(center=(WIDTH // 2, 60))
+        text_rect.top = 80
+
         try:
             image = pygame.image.load('../assets/images/gameover.png')
 
@@ -309,14 +391,18 @@ class Game:
 
             all_sprites.update(clock)
             # self.screen.fill(blue)
+            self.screen.blit(res_text, text_rect)
             all_sprites.draw(self.screen)
             pygame.display.flip()
             clock.tick(60)
         pygame.quit()
 
     def run(self):
-        self.show_welcome_screen()
-        self.main_game()
+        self.show_auth_screen()
+        
+        if user_name:
+            self.show_welcome_screen()
+            self.main_game()
 
     def main_game(self):
         """ Основной игровой цикл. """
