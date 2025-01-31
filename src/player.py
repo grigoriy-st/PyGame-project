@@ -1,14 +1,19 @@
 import pygame
 from bullet import Bullet
-from settings import WIDTH, HEIGHT, PLAYER_SPEED, img_skin_names, skin_index
+from settings import WIDTH, HEIGHT
+
+PLAYER_SPEED = 5
+img_skin_names = ['baseSkin', 'skin2', 'skin3', 'skin4', 'skin5']
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, skin_index=0):
         super().__init__()
+        # global img_skin_names, skin_index
         self.image = pygame.Surface((70, 70))
 
-        skin_name = img_skin_names[skin_index % len(img_skin_names)]
+        self.skin_index = skin_index
+        skin_name = img_skin_names[self.skin_index % len(img_skin_names)]
 
         self.img = pygame.image.load(f'../assets/images/{skin_name}.png')
         self.img = pygame.transform.scale(self.img, (70, 70))
@@ -32,8 +37,15 @@ class Player(pygame.sprite.Sprite):
     def shoot(self):
         """ Создание выстрела. """
         bullet = Bullet(self.rect.centerx, self.rect.top)
+        bullet.gunshot_sound()
         return bullet
 
     def draw(self, surface):
         """ Метод для отрисовки игрока на экране. """
         surface.blit(self.img, self.rect.topleft)
+
+    def set_ski_index_up(self):
+        self.skin_index += 1
+
+    def set_ski_index_down(self):
+        self.skin_index += 1

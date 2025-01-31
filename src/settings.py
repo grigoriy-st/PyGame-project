@@ -6,22 +6,11 @@ from screeninfo import get_monitors
 monitors = [m for m in get_monitors()]
 # Ширина и высота экрана
 WIDTH, HEIGHT = monitors[0].width, monitors[0].height - 60
-# Переменные игры
-SCORE = 0
-COEFFICIENT = 1
-FPS = 60
-ASTEROID_SPAWN_RATE = 50  # Частота появления астероидов
-BULLET_SPEED = 10
-ASTEROID_SPEED = 2
-PLAYER_SPEED = 5
 
 # Цвета
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
-
-skin_index = 0
-img_skin_names = ['baseSkin', 'skin2', 'skin3', 'skin4', 'skin5']
 
 # Для авторизации
 user_name = None
