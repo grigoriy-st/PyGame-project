@@ -4,23 +4,23 @@ import sys
 import random
 # from moviepy import VideoFileClip
 
-from settings import (
-    WIDTH, HEIGHT,
-    BLACK, WHITE, RED,
-    user_name
-)
-# Переменные игры
-SCORE = 0
-FPS = 60
-
-# from settings import *
-from player import Player, img_skin_names, PLAYER_SPEED
+from player import Player, img_skin_names
 from asteroid import ASTEROID_SPAWN_RATE
 from bullet import BULLET_SPEED
 from asteroid import Asteroid
 from sprite import Sprite
+from explosion import Explosion
 
-os.chdir("src")
+from settings import (
+    WIDTH, HEIGHT,
+    BLACK, WHITE,
+    user_name
+)
+# Переменные игры
+score = 0
+FPS = 60
+
+os.chdir("src")  # Для VSCode
 
 skin_ID = 0
 # def settings():
@@ -226,11 +226,9 @@ class Game:
                     # Выборка скина космолёта
                     if l_arrow_rect.collidepoint(event.pos):
                         skin_ID -= 1
-                        # print("Index:", skin_index, "Image:")
 
                     if r_arrow_rect.collidepoint(event.pos):
                         skin_ID += 1
-                        # print("Index:", skin_index, "Image:")
 
                     if settings_btn_rect.collidepoint(event.pos):
                         # settings()
@@ -247,7 +245,7 @@ class Game:
         pygame.display.set_caption("Game over")
         blue = (0, 0, 0)
 
-        res_text = self.font.render(f"Твой результат: {SCORE}",
+        res_text = self.font.render(f"Твой результат: {score}",
                                     True, (255, 255, 255))
         text_rect = res_text.get_rect(center=(WIDTH // 2, 60))
         text_rect.top = 80
@@ -292,13 +290,11 @@ class Game:
                         self.main_game()  # начало новой игры
                         break
 
-                        return
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_SPACE:
                             self.show_welcome_screen()
                             self.main_game()  # начало новой игры
                             break
-                            return
 
             all_sprites.update(clock)
             self.screen.blit(res_text, text_rect)
@@ -316,7 +312,7 @@ class Game:
 
     def main_game(self):
         """ Основной игровой цикл. """
-        global ASTEROID_SPAWN_RATE, skin_index
+        global ASTEROID_SPAWN_RATE, skin_index, score
 
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -331,16 +327,18 @@ class Game:
         all_sprites = pygame.sprite.Group()
         asteroids = pygame.sprite.Group()
         bullets = pygame.sprite.Group()
+        explosions = pygame.sprite.Group()
 
         # Создание игрока
         player = Player(skin_ID)
         all_sprites.add(player)
 
-        # Основной игровой цикл
+        # Переменные игры
         score = 0
         asteroid_speed = 2
         coefficient = 1
 
+        # Основной игровой цикл
         while self.running:
 
             for event in pygame.event.get():
@@ -358,9 +356,11 @@ class Game:
             if random.randint(1, ASTEROID_SPAWN_RATE) == 1:
                 # Преобразуем в секунды
                 elapsed_seconds = elapsed_time / 1000.0
-                # Увеличение скорости астероидов после 30 сек.
-                if elapsed_seconds > 30 * coefficient:
-                    asteroid_speed *= coefficient + 0.5
+
+                if elapsed_seconds > 15 * coefficient:
+                    # Увеличиваем скорость плавно
+                    new_speed = asteroid_speed + (coefficient / 2)
+                    asteroid_speed = min(new_speed, 20)
                     coefficient += 1
                     score += 75
 
@@ -368,16 +368,31 @@ class Game:
                 all_sprites.add(asteroid)
                 asteroids.add(asteroid)
 
-            # Обновление спрайтов
-            all_sprites.update()
-
             # Проверка на столкновения
             for bullet in bullets:
                 hit_asteroids = pygame.sprite.spritecollide(
                     bullet, asteroids, True)
                 if hit_asteroids:
+                    bullets.remove(bullet)
+                    bullet.kill_asteroid_sound()
                     bullet.kill()
-                    score += len(hit_asteroids)
+                    score += 1
+
+                    for asteroid in hit_asteroids:
+                        asteroid_width = asteroid.rect.width
+                        asteroid_height = asteroid.rect.height
+
+                        # Взрыв в позиции астероида
+                        explosion = Explosion(asteroid.rect.centerx,
+                                              asteroid.rect.centery,
+                                              '../assets/gifs/explosion.gif',
+                                              width=asteroid_width,
+                                              height=asteroid_height)
+                        explosions.add(explosion)
+
+            # Обновление спрайтов
+            all_sprites.update()
+            explosions.update()
 
             # Проверка на столкновение игрока с астероидами
             if pygame.sprite.spritecollideany(player, asteroids):
@@ -387,9 +402,10 @@ class Game:
             self.screen.blit(background_image, (0, 0))
             all_sprites.draw(self.screen)
             player.draw(self.screen)
+            explosions.draw(self.screen)
 
             # Отображение счета
-            font = pygame.font.Font(None, 36)
+            font = pygame.font.Font(None, 40)
             text = font.render(f'Score: {score}', True, WHITE)
             self.screen.blit(text, (10, 10))
 

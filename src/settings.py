@@ -5,8 +5,8 @@ from screeninfo import get_monitors
 
 monitors = [m for m in get_monitors()]
 # Ширина и высота экрана
-WIDTH, HEIGHT = monitors[0].width, monitors[0].height - 60
-
+# WIDTH, HEIGHT = monitors[0].width, monitors[0].height - 60
+WIDTH, HEIGHT = 800, 800  # Для удобства тестирования
 # Цвета
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)

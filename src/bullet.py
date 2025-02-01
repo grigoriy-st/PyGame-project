@@ -1,7 +1,5 @@
-import os
 import pygame
 from settings import load_image
-
 
 BULLET_SPEED = 10
 
@@ -20,6 +18,13 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
     def gunshot_sound(self):
+        """ Звук от выстрела. """
         pygame.mixer.init()
         shot_sound = pygame.mixer.Sound('../assets/sounds/gun_sound.wav')
+        shot_sound.play()
+
+    def kill_asteroid_sound(self):
+        """ Звук уничтожения астероида. """
+        shot_sound = pygame.mixer.Sound(
+            '../assets/sounds/distant_sound_of_explosion.wav')
         shot_sound.play()
