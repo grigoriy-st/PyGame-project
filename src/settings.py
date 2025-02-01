@@ -30,3 +30,50 @@ def load_image(fullname, colorkey=None):
     else:
         image = image.convert_alpha()
     return image
+
+# def settings():
+#     ''' отображение видео в настройках '''
+#     pygame.init()
+#     screen_width = 1000
+#     screen_height = 1000
+#     # pygame.display.set_caption("Настройки")
+#     # None - использовать шрифт по умолчанию, 74 - размер шрифта
+
+#     # font = pygame.font.Font(None, 74)
+#     # Текст, антиалиасинг, цвет текста
+#     # text = font.render("Добро пожаловать в настройки!",
+#                           True, (255, 255, 255))
+#     #
+#     # text_rect = text.get_rect(center=(screen_width // 2, 0))
+#     # text_rect.top = 80
+#     pygame.display.flip()
+#     screen = pygame.display.set_mode((screen_width, screen_height))
+
+#     # Загрузка видео
+#     #video_path = '../assets/images/rotated_video1.mp4'
+#     #clip = VideoFileClip(video_path)
+#     #frames = [clip.get_frame(t) for t in range(int(clip.duration))]
+
+#     # Основной цикл
+#     running = True
+#     clock = pygame.time.Clock()
+#     frame_index = 0
+
+#     while running:
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT:
+#                 running = False
+
+#         # Получение текущего кадра
+#         # if frame_index < len(frames):
+#         #     frame = frames[frame_index]
+#         #     frame_surface = pygame.surfarray.make_surface(frame)
+#         #     screen.blit(frame_surface, (0, 0))
+#         #     frame_index += 1
+#         # else:
+#         #     frame_index = 0  # Перезапуск видео
+
+#         pygame.display.flip()
+#         # clock.tick(60)  # Ограничение FPS
+
+#     pygame.quit()

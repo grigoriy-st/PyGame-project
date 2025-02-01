@@ -10,6 +10,8 @@ from bullet import BULLET_SPEED
 from asteroid import Asteroid
 from sprite import Sprite
 from explosion import Explosion
+from coin import Coin, COIN_SPAWN_RATE
+
 
 from settings import (
     WIDTH, HEIGHT,
@@ -17,59 +19,9 @@ from settings import (
     user_name
 )
 # Переменные игры
-score = 0
+
 FPS = 60
-
 os.chdir("src")  # Для VSCode
-
-skin_ID = 0
-# def settings():
-#     ''' отображение видео в настройках '''
-#     pygame.init()
-#     screen_width = 1000
-#     screen_height = 1000
-#     # pygame.display.set_caption("Настройки")
-#     # None - использовать шрифт по умолчанию, 74 - размер шрифта
-
-#     # font = pygame.font.Font(None, 74)
-#     # Текст, антиалиасинг, цвет текста
-#     # text = font.render("Добро пожаловать в настройки!",
-#                           True, (255, 255, 255))
-#     #
-#     # text_rect = text.get_rect(center=(screen_width // 2, 0))
-#     # text_rect.top = 80
-#     pygame.display.flip()
-#     screen = pygame.display.set_mode((screen_width, screen_height))
-
-#     # Загрузка видео
-#     #video_path = '../assets/images/rotated_video1.mp4'
-#     #clip = VideoFileClip(video_path)
-#     #frames = [clip.get_frame(t) for t in range(int(clip.duration))]
-
-#     # Основной цикл
-#     running = True
-#     clock = pygame.time.Clock()
-#     frame_index = 0
-
-#     while running:
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 running = False
-
-#         # Получение текущего кадра
-#         # if frame_index < len(frames):
-#         #     frame = frames[frame_index]
-#         #     frame_surface = pygame.surfarray.make_surface(frame)
-#         #     screen.blit(frame_surface, (0, 0))
-#         #     frame_index += 1
-#         # else:
-#         #     frame_index = 0  # Перезапуск видео
-
-#         pygame.display.flip()
-#         # clock.tick(60)  # Ограничение FPS
-
-#     pygame.quit()
-
 
 class Game:
     def __init__(self):
@@ -79,6 +31,10 @@ class Game:
         self.running = True
         self.font = pygame.font.Font(None, 50)
         self.button_font = pygame.font.Font(None, 48)
+
+        self.skin_ID = 0
+        self.score = 0
+        self.coins_counter = 0
 
     def show_auth_screen(self):
         """ Отображение окна авторизации. """
@@ -97,20 +53,17 @@ class Game:
         color = color_passive
         # Переменные состояний
         active = False
-
+        
         while True:
             for event in pygame.event.get():
-
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if input_rect.collidepoint(event.pos):
                         active = True
                     else:
                         active = False
-
                     if button_rect.collidepoint(event.pos):
                         user_name = user_text
                         if user_name == '':
@@ -118,53 +71,44 @@ class Game:
                         else:
                             error_message = ''
                             return
-
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE:
                         user_text = user_text[:-1]
                     else:
                         user_text += event.unicode
-
             welcome_text = self.font.render("Добро пожаловать в космическую бурю!",
                                             True, (255, 255, 255))
             text_rect = welcome_text.get_rect(
                                     center=(WIDTH // 2, HEIGHT // 2 - 200)
                                     )
-
             text2 = self.font.render("Введите своё имя:", True, (255, 255, 255))
             text2_rect = welcome_text.get_rect(
                                     center=(WIDTH // 2 + 200, HEIGHT // 2 - 30)
                                     )
-
             input_width = 200
             input_height = 32
             input_rect = pygame.Rect((WIDTH // 2 - 90), (HEIGHT // 2),
-                                     input_width, input_height)
-
+                                    input_width, input_height)
             button_text = self.button_font.render("Войти", True, (0, 0, 0))
             button_rect = button_text.get_rect(center=(
                                                 WIDTH // 2, HEIGHT // 2 + 200)
-                                               )
+                                            )
             self.screen.fill(BLACK)
-
             pygame.draw.rect(self.screen, (0, 255, 0),
-                             button_rect.inflate(20, 20))  # Кнопка
+                            button_rect.inflate(20, 20))  # Кнопка
             self.screen.blit(button_text, button_rect)
             self.screen.blit(welcome_text, text_rect)
             self.screen.blit(text2, text2_rect)
-
             if error_message:  # Отображение ошибки ввода
                 error_surface = error_font.render(
                                 error_message, True, (255, 0, 0))
                 error_rect = error_surface.get_rect(
-                             center=(WIDTH // 2, HEIGHT // 2 + 250))
+                            center=(WIDTH // 2, HEIGHT // 2 + 250))
                 self.screen.blit(error_surface, error_rect)
-
             if active:
                 color = color_active
             else:
                 color = color_passive
-
             pygame.draw.rect(self.screen, color, input_rect)
             # self.screen.blit(button_text, button_rect)
             text_surface = base_font.render(user_text, True, (255, 255, 255))
@@ -174,9 +118,10 @@ class Game:
             # 60 frames should be passed.
             clock.tick(60)
 
+
     def show_welcome_screen(self):
         """ Отображение приветственного окна. """
-        global skin_index, img_skin_names, skin_ID
+        global skin_index, img_skin_names
         while True:
             self.screen.fill((0, 0, 0))
 
@@ -222,7 +167,7 @@ class Game:
             self.screen.blit(right_arrow, r_arrow_rect)
 
             # Скин на выбор
-            skin_name = img_skin_names[skin_ID % (len(img_skin_names))]
+            skin_name = img_skin_names[self.skin_ID % (len(img_skin_names))]
             skin_img = pygame.image.load(f'../assets/images/{skin_name}.png')
             skin_img = pygame.transform.scale(skin_img, (300, 300))
             skin_img_rect = skin_img.get_rect(center=(WIDTH // 2, HEIGHT // 2))
@@ -240,10 +185,10 @@ class Game:
 
                     # Выборка скина космолёта
                     if l_arrow_rect.collidepoint(event.pos):
-                        skin_ID -= 1
+                        self.skin_ID -= 1
 
                     if r_arrow_rect.collidepoint(event.pos):
-                        skin_ID += 1
+                        self.skin_ID += 1
 
                     if settings_btn_rect.collidepoint(event.pos):
                         # settings()
@@ -260,10 +205,14 @@ class Game:
         pygame.display.set_caption("Game over")
         blue = (0, 0, 0)
 
-        res_text = self.font.render(f"Твой результат: {score}",
+        res_text = self.font.render(f"Твой результат: {self.score}",
                                     True, (255, 255, 255))
         text_rect = res_text.get_rect(center=(WIDTH // 2, 60))
         text_rect.top = 80
+        coins_label = self.font.render(f"Собрано монет: {self.coins_counter}",
+                                    True, (255, 255, 255))
+        c_label_rect = res_text.get_rect(center=(WIDTH // 2, 60))
+        c_label_rect.top = 150
 
         try:
             image = pygame.image.load('../assets/images/gameover.png')
@@ -313,6 +262,7 @@ class Game:
 
             all_sprites.update(clock)
             self.screen.blit(res_text, text_rect)
+            self.screen.blit(coins_label, c_label_rect)
             all_sprites.draw(self.screen)
             pygame.display.flip()
             clock.tick(60)
@@ -327,7 +277,7 @@ class Game:
 
     def main_game(self):
         """ Основной игровой цикл. """
-        global ASTEROID_SPAWN_RATE, skin_index, score
+        global skin_index
 
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -341,15 +291,15 @@ class Game:
         # Группы спрайтов
         all_sprites = pygame.sprite.Group()
         asteroids = pygame.sprite.Group()
+        coins = pygame.sprite.Group()
         bullets = pygame.sprite.Group()
         explosions = pygame.sprite.Group()
 
         # Создание игрока
-        player = Player(skin_ID)
+        player = Player(self.skin_ID)
         all_sprites.add(player)
 
         # Переменные игры
-        score = 0
         asteroid_speed = 2
         coefficient = 1
 
@@ -367,21 +317,26 @@ class Game:
                         bullets.add(bullet)
             # Время в миллисекундах
             elapsed_time = pygame.time.get_ticks() - start_time
+            elapsed_seconds = elapsed_time / 1000.0  # Преобразуем в секунды
 
+            if elapsed_seconds > 15 * coefficient:
+                # Увеличиваем скорость плавно
+                new_speed = asteroid_speed + (coefficient / 2)
+                asteroid_speed = min(new_speed, 20)
+                coefficient += 1
+                self.score += 25
+
+            # Отображение астероидов
             if random.randint(1, ASTEROID_SPAWN_RATE) == 1:
-                # Преобразуем в секунды
-                elapsed_seconds = elapsed_time / 1000.0
-
-                if elapsed_seconds > 15 * coefficient:
-                    # Увеличиваем скорость плавно
-                    new_speed = asteroid_speed + (coefficient / 2)
-                    asteroid_speed = min(new_speed, 20)
-                    coefficient += 1
-                    score += 75
-
                 asteroid = Asteroid(asteroid_speed, coefficient)
                 all_sprites.add(asteroid)
                 asteroids.add(asteroid)
+
+            # Отображение монет
+            if random.randint(1, COIN_SPAWN_RATE) == 1:
+                coin = Coin(asteroid_speed, coefficient)
+                all_sprites.add(coin)
+                coins.add(coin)
 
             # Проверка на столкновения
             for bullet in bullets:
@@ -391,7 +346,7 @@ class Game:
                     bullets.remove(bullet)
                     bullet.kill_asteroid_sound()
                     bullet.kill()
-                    score += 1
+                    self.score += 1
 
                     for asteroid in hit_asteroids:
                         asteroid_width = asteroid.rect.width
@@ -404,6 +359,15 @@ class Game:
                                               width=asteroid_width,
                                               height=asteroid_height)
                         explosions.add(explosion)
+
+            for coin in coins:
+                is_collected_coin = pygame.sprite.spritecollide(
+                    player, coins, True)
+                if is_collected_coin:
+                    coin.sound_of_collecting_coin()
+                    coin.kill()
+                    self.coins_counter += 1
+
 
             # Обновление спрайтов
             all_sprites.update()
@@ -421,8 +385,10 @@ class Game:
 
             # Отображение счета
             font = pygame.font.Font(None, 40)
-            text = font.render(f'Score: {score}', True, WHITE)
-            self.screen.blit(text, (10, 10))
+            score_label = font.render(f'Score: {self.score}', True, WHITE)
+            self.screen.blit(score_label, (10, 10))
+            coin_counter_label = font.render(f'Coins: {self.coins_counter}', True, WHITE)
+            self.screen.blit(coin_counter_label, (10, 35))
 
             pygame.display.flip()
             clock.tick(FPS)
