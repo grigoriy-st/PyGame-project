@@ -4,6 +4,7 @@ import sys
 import random
 # from moviepy import VideoFileClip
 
+from db_manager import DBManager
 from player import Player, img_skin_names
 from asteroid import ASTEROID_SPAWN_RATE
 from bullet import BULLET_SPEED
@@ -31,6 +32,7 @@ class Game:
         self.running = True
         self.font = pygame.font.Font(None, 50)
         self.button_font = pygame.font.Font(None, 48)
+        self.db_mng = DBManager()  # Менеджер работы с БД
 
         self.skin_ID = 0
         self.score = 0
@@ -39,6 +41,7 @@ class Game:
     def show_auth_screen(self):
         """ Отображение окна авторизации. """
         global user_name
+
         self.screen.fill(BLACK)
         clock = pygame.time.Clock()
         # Шрифт
@@ -174,6 +177,25 @@ class Game:
 
             self.screen.blit(skin_img, skin_img_rect)
 
+            # Отображение рекорда текущего игрока
+            last_record = self.db_mng.get_last_score(user_name)
+            last_record = 1
+            if last_record:
+                l_score_lbl_text = self.button_font.render(f"Твой рекорд: {last_record}",
+                                                  True, (255, 255, 255))
+                lbl_score_rect = l_score_lbl_text.get_rect(
+                                    center=(WIDTH // 2, 160))
+                self.screen.blit(l_score_lbl_text, lbl_score_rect)
+
+            # Отображение рекорда лучшего игрока
+            # record_holder_name, record = self.db_mng.get_best_score()
+            record_holder_name, record = "Первый", 1
+            record_among_all_text = self.button_font.render(f"Лучший игрок: {record_holder_name}, набрав {record} ",
+                                                  True, (255, 255, 255))
+            record_among_all_rect = record_among_all_text.get_rect(
+                                    center=(WIDTH // 2, 200))
+            self.screen.blit(record_among_all_text, record_among_all_rect)
+            
             # Обработка событий
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -202,6 +224,7 @@ class Game:
 
     def show_game_over_screen(self):
         """ Отображение конца игры. """
+
         pygame.display.set_caption("Game over")
         blue = (0, 0, 0)
 
@@ -246,6 +269,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    self.db_mng.update_score(self.score)
                     self.running = False
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
