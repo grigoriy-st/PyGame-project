@@ -10,14 +10,10 @@ class DBManager:
         self.connection = sqlite3.connect(DB_PATH)
         self.cursor = self.connection.cursor()
 
-    # def create_table(self):
-    #     self.cursor.execute('''CREATE TABLE IF NOT EXISTS scores
-    #                            (id INTEGER PRIMARY KEY, player_name TEXT, score INTEGER)''')
-    #     self.connection.commit()
 
     def add_record(self, player_name, score, coins):
         """ Запись результата игры. """
-        if self.get_last_score(player_name):  # Существует ли уже запись?
+        if self.get_last_score(player_name)[1]:  # Существует ли уже запись?
             self.update_score(player_name, score, coins)
         else:
             self.cursor.execute('''
@@ -51,7 +47,7 @@ class DBManager:
                             (new_score, coins, player_name))
         self.connection.commit()
 
-    def get_last_score(self, player_name) -> int:
+    def get_last_score(self, player_name) -> Tuple[int, bool]:
         """ Получение данных о рекорде текущего пользователя. """
         self.cursor.execute(f'''
                             select
@@ -62,7 +58,9 @@ class DBManager:
                             ''')
         last_player_score = self.cursor.fetchall()
         if last_player_score:
-            return last_player_score[0][0]
+            return last_player_score[0][0], True
+        else:
+            return None, False
         ...
 
     def get_best_score(self) -> Tuple[str, int]:

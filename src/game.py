@@ -33,6 +33,7 @@ class Game:
         self.running = True
         self.font = pygame.font.Font(None, 50)
         self.button_font = pygame.font.Font(None, 48)
+
         self.db_mng = DBManager()  # Менеджер работы с БД
         self.user_name = user_name
 
@@ -85,6 +86,7 @@ class Game:
                         user_text = user_text[:-1]
                     else:
                         user_text += event.unicode
+
 
             welcome_text = self.font.render(
                 "Добро пожаловать в космическую бурю!",
@@ -188,8 +190,8 @@ class Game:
             self.screen.blit(skin_img, skin_img_rect)
 
             # Отображение рекорда текущего игрока
-            last_record = self.db_mng.get_last_score(user_name)
-            if last_record:
+            last_record, is_exists_record = self.db_mng.get_last_score(user_name)
+            if is_exists_record:
                 l_score_lbl_text = self.button_font.render(
                     f"Твой рекорд: {last_record}", True, (255, 255, 255))
                 lbl_score_rect = l_score_lbl_text.get_rect(
@@ -226,7 +228,8 @@ class Game:
                         self.skin_ID += 1
 
                     if settings_btn_rect.collidepoint(event.pos):
-                        # settings()
+                        # Работа кнопки настроек
+                        # print("Нажата кнопка настроек")
                         ...
 
                 if event.type == pygame.KEYDOWN:
@@ -252,11 +255,11 @@ class Game:
         c_label_rect.top = 150
 
         # Работа с БД
-        last_score = self.db_mng.get_last_score(self.user_name)
-        if last_score and last_score > self.score:  # Лучшая ли игра у пользователя?
+        last_score, is_exists_record = self.db_mng.get_last_score(self.user_name)
+        if is_exists_record and last_score < self.score:  # Лучшая ли игра у пользователя?
             self.db_mng.update_score(
                 self.user_name, self.score, self.coins_counter)
-        else:
+        elif not is_exists_record:
             self.db_mng.add_record(
                 self.user_name, self.score, self.coins_counter)
 
@@ -292,7 +295,7 @@ class Game:
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.db_mng.update_score(self.score)
+                    self.db_mng.update_score(self.user_name, self.score, self.coins_counter)
                     self.running = False
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
@@ -308,11 +311,15 @@ class Game:
                             break
 
             all_sprites.update(clock)
-            self.screen.blit(res_text, text_rect)
-            self.screen.blit(coins_label, c_label_rect)
-            all_sprites.draw(self.screen)
-            pygame.display.flip()
-            clock.tick(60)
+            
+            try:
+                self.screen.blit(res_text, text_rect)
+                self.screen.blit(coins_label, c_label_rect)
+                all_sprites.draw(self.screen)
+                pygame.display.flip()
+                clock.tick(60)
+            except pygame.error as e:
+                print(f"Error: {e}")
 
         pygame.quit()
 
@@ -350,6 +357,8 @@ class Game:
         # Переменные игры
         asteroid_speed = 2
         coefficient = 1
+        self.score = 0
+        self.coins_counter =0
 
         # Основной игровой цикл
         while self.running:
@@ -442,7 +451,9 @@ class Game:
             clock.tick(FPS)
 
         self.running = False
+        self.db_mng.close()
         pygame.quit()
+
 
 
 if __name__ == "__main__":
