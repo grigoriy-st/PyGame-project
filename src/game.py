@@ -24,6 +24,7 @@ from settings import (
 FPS = 60
 os.chdir("src")  # Для VSCode
 
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -33,6 +34,7 @@ class Game:
         self.font = pygame.font.Font(None, 50)
         self.button_font = pygame.font.Font(None, 48)
         self.db_mng = DBManager()  # Менеджер работы с БД
+        self.user_name = user_name
 
         self.skin_ID = 0
         self.score = 0
@@ -56,31 +58,37 @@ class Game:
         color = color_passive
         # Переменные состояний
         active = False
-        
+
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
+
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if input_rect.collidepoint(event.pos):
                         active = True
                     else:
                         active = False
+
                     if button_rect.collidepoint(event.pos):
                         user_name = user_text
                         if user_name == '':
                             error_message = 'Ошибка: имя не может быть пустым!'
                         else:
                             error_message = ''
+                            self.user_name = user_name
                             return
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_BACKSPACE:
                         user_text = user_text[:-1]
                     else:
                         user_text += event.unicode
-            welcome_text = self.font.render("Добро пожаловать в космическую бурю!",
-                                            True, (255, 255, 255))
+
+            welcome_text = self.font.render(
+                "Добро пожаловать в космическую бурю!",
+                True, (255, 255, 255))
             text_rect = welcome_text.get_rect(
                                     center=(WIDTH // 2, HEIGHT // 2 - 200)
                                     )
@@ -91,36 +99,38 @@ class Game:
             input_width = 200
             input_height = 32
             input_rect = pygame.Rect((WIDTH // 2 - 90), (HEIGHT // 2),
-                                    input_width, input_height)
+                                     input_width, input_height)
             button_text = self.button_font.render("Войти", True, (0, 0, 0))
             button_rect = button_text.get_rect(center=(
                                                 WIDTH // 2, HEIGHT // 2 + 200)
-                                            )
+                                               )
+
             self.screen.fill(BLACK)
             pygame.draw.rect(self.screen, (0, 255, 0),
-                            button_rect.inflate(20, 20))  # Кнопка
+                             button_rect.inflate(20, 20))  # Кнопка
             self.screen.blit(button_text, button_rect)
             self.screen.blit(welcome_text, text_rect)
             self.screen.blit(text2, text2_rect)
+
             if error_message:  # Отображение ошибки ввода
                 error_surface = error_font.render(
                                 error_message, True, (255, 0, 0))
                 error_rect = error_surface.get_rect(
                             center=(WIDTH // 2, HEIGHT // 2 + 250))
                 self.screen.blit(error_surface, error_rect)
+
             if active:
                 color = color_active
             else:
                 color = color_passive
+
             pygame.draw.rect(self.screen, color, input_rect)
-            # self.screen.blit(button_text, button_rect)
             text_surface = base_font.render(user_text, True, (255, 255, 255))
             self.screen.blit(text_surface, (input_rect.x+5, input_rect.y+5))
             input_rect.w = max(100, text_surface.get_width()+10)
             pygame.display.flip()
-            # 60 frames should be passed.
-            clock.tick(60)
 
+            clock.tick(60)
 
     def show_welcome_screen(self):
         """ Отображение приветственного окна. """
@@ -179,23 +189,26 @@ class Game:
 
             # Отображение рекорда текущего игрока
             last_record = self.db_mng.get_last_score(user_name)
-            last_record = 1
             if last_record:
-                l_score_lbl_text = self.button_font.render(f"Твой рекорд: {last_record}",
-                                                  True, (255, 255, 255))
+                l_score_lbl_text = self.button_font.render(
+                    f"Твой рекорд: {last_record}", True, (255, 255, 255))
                 lbl_score_rect = l_score_lbl_text.get_rect(
                                     center=(WIDTH // 2, 160))
                 self.screen.blit(l_score_lbl_text, lbl_score_rect)
 
             # Отображение рекорда лучшего игрока
             # record_holder_name, record = self.db_mng.get_best_score()
-            record_holder_name, record = "Первый", 1
-            record_among_all_text = self.button_font.render(f"Лучший игрок: {record_holder_name}, набрав {record} ",
-                                                  True, (255, 255, 255))
-            record_among_all_rect = record_among_all_text.get_rect(
-                                    center=(WIDTH // 2, 200))
-            self.screen.blit(record_among_all_text, record_among_all_rect)
-            
+            best_score_record = self.db_mng.get_best_score()
+            if best_score_record:
+                record_holder_name, record_score = best_score_record
+                record_among_all_text = self.button_font.render(
+                    'Лучший игрок: {}, набрал {} очков'.format(
+                        record_holder_name, record_score),
+                    True, (255, 255, 255))
+                record_among_all_rect = record_among_all_text.get_rect(
+                                        center=(WIDTH // 2, 200))
+                self.screen.blit(record_among_all_text, record_among_all_rect)
+
             # Обработка событий
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -232,10 +245,20 @@ class Game:
                                     True, (255, 255, 255))
         text_rect = res_text.get_rect(center=(WIDTH // 2, 60))
         text_rect.top = 80
-        coins_label = self.font.render(f"Собрано монет: {self.coins_counter}",
-                                    True, (255, 255, 255))
+        coins_label = self.font.render(
+            f"Собрано монет: {self.coins_counter}",
+            True, (255, 255, 255))
         c_label_rect = res_text.get_rect(center=(WIDTH // 2, 60))
         c_label_rect.top = 150
+
+        # Работа с БД
+        last_score = self.db_mng.get_last_score(self.user_name)
+        if last_score and last_score > self.score:  # Лучшая ли игра у пользователя?
+            self.db_mng.update_score(
+                self.user_name, self.score, self.coins_counter)
+        else:
+            self.db_mng.add_record(
+                self.user_name, self.score, self.coins_counter)
 
         try:
             image = pygame.image.load('../assets/images/gameover.png')
@@ -290,6 +313,7 @@ class Game:
             all_sprites.draw(self.screen)
             pygame.display.flip()
             clock.tick(60)
+
         pygame.quit()
 
     def run(self):
@@ -392,7 +416,6 @@ class Game:
                     coin.kill()
                     self.coins_counter += 1
 
-
             # Обновление спрайтов
             all_sprites.update()
             explosions.update()
@@ -411,7 +434,8 @@ class Game:
             font = pygame.font.Font(None, 40)
             score_label = font.render(f'Score: {self.score}', True, WHITE)
             self.screen.blit(score_label, (10, 10))
-            coin_counter_label = font.render(f'Coins: {self.coins_counter}', True, WHITE)
+            coin_counter_label = font.render(
+                f'Coins: {self.coins_counter}', True, WHITE)
             self.screen.blit(coin_counter_label, (10, 35))
 
             pygame.display.flip()
