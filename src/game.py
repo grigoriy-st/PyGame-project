@@ -22,7 +22,7 @@ from settings import (
 # Переменные игры
 
 FPS = 60
-os.chdir("src")  # Для VSCode
+
 
 
 class Game:
